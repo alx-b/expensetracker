@@ -1,4 +1,4 @@
-package storage
+package database
 
 import (
 	"database/sql"
@@ -14,7 +14,7 @@ type DB struct {
 	db *sql.DB
 }
 
-// CreateDB opens sqlite database connection and returns DB struct.
+// CreateDB opens sqlite database connection and returns pointer to DB struct.
 func CreateDB() *DB {
 	db, err := sql.Open("sqlite", "./db.sqlite3")
 	if err != nil {
