@@ -7,7 +7,7 @@ A simple expense tracker.
 - modernc.org/sqlite v1.23.1
 
 ## Look
-![]("./expense_tracker.png")
+![](./expense_tracker.png)
 
 ## Next
 - Update/Delete expenses
