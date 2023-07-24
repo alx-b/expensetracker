@@ -4,6 +4,7 @@ import "time"
 
 // STRUCTS
 type Expense struct {
+	Id       int
 	Name     string
 	Date     string
 	Amount   float64
@@ -27,11 +28,13 @@ type Storage interface {
 	GetBudgetWithYearMonth(string) string
 	InsertBudget(string, string) error
 	UpdateDefaultBudget(string) error
+	DeleteExpense(int) error
 }
 
 type API interface {
 	CreateMonthData(int, time.Month) MonthData
 	AddExpense(Expense) error
+	RemoveExpense(int) error
 	InsertBudgetMonth(string, string) error
 	UpdateDefaultBudget(string) error
 }

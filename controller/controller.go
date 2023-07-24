@@ -95,6 +95,11 @@ func (c *Controller) AddExpense(expense domain.Expense) error {
 	return c.db.InsertExpense(expense)
 }
 
+// RemoveExpense removes Expense from database if valid id.
+func (c *Controller) RemoveExpense(id int) error {
+	return c.db.DeleteExpense(id)
+}
+
 // InsertBudgetMonth adds budget amount to database if valid.
 func (c *Controller) InsertBudgetMonth(amount, date string) error {
 	amountFloat, err := strconv.ParseFloat(amount, 64)

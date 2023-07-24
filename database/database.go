@@ -109,7 +109,7 @@ func (db *DB) Close() error {
 
 // GetWithMonthYear returns expenses of a specific month and year (YYYY-MM).
 func (db *DB) GetExpensesWithYearMonth(yearMonth string) []domain.Expense {
-	rows, err := db.db.Query("SELECT name, date, amount, category FROM expenses WHERE date LIKE ?", yearMonth)
+	rows, err := db.db.Query("SELECT id, name, date, amount, category FROM expenses WHERE date LIKE ?", yearMonth)
 	if err != nil {
 		logger.Error(fmt.Errorf("Could not query database: %w", err).Error())
 	}
@@ -121,6 +121,7 @@ func (db *DB) GetExpensesWithYearMonth(yearMonth string) []domain.Expense {
 	for rows.Next() {
 		expense := domain.Expense{}
 		rows.Scan(
+			&expense.Id,
 			&expense.Name,
 			&expense.Date,
 			&expense.Amount,
@@ -219,6 +220,21 @@ func (db DB) InsertExpense(expense domain.Expense) error {
 	_, err = result.LastInsertId()
 	if err != nil {
 		return fmt.Errorf("Could not retrieve last inserted id: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteExpense deletes an expense from expenses table by its Id.
+func (db DB) DeleteExpense(id int) error {
+	result, err := db.db.Exec("DELETE FROM expenses WHERE id=?", id)
+	if err != nil {
+		return fmt.Errorf("Could not delete from table: %w", err)
+	}
+
+	_, err = result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("Could not retrieve number of row affected: %w", err)
 	}
 
 	return nil
