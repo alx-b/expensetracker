@@ -10,7 +10,7 @@ A simple expense tracker.
 ![](./expense_tracker.png)
 
 ## Next
-- Update/Delete expenses
+- Update expenses
 - Refactoring
 
 ## Goal
