@@ -37,7 +37,7 @@ func Run(w *app.Window, controller domain.API) error {
 
 	// Create UI parts
 	topBar := createTopBar(th, &currentPage, &monthView, controller)
-	list := createListContainer(th, &monthView.Expenses)
+	list := createListContainer(th, &monthView, controller)
 	dataDisplay := createDataDisplay(th, controller, &monthView)
 	addFormPage := createFormPage(th, controller)
 
@@ -56,6 +56,7 @@ func Run(w *app.Window, controller domain.API) error {
 			topBar.Update()
 			dataDisplay.Update()
 			addFormPage.Update()
+			list.Update()
 
 			// LAYOUT
 			if currentPage == List {

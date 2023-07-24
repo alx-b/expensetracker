@@ -22,7 +22,46 @@ type ListContainer struct {
 	dateLabel     material.LabelStyle
 	categoryLabel material.LabelStyle
 	amountLabel   material.LabelStyle
-	expenses      *[]domain.Expense
+
+	deleteButtons []material.ButtonStyle
+	controller    domain.API
+	monthView     *domain.MonthData
+}
+
+// TODO handle this mess better.
+// Update updates the list and monthView.
+func (c *ListContainer) Update() {
+	if len(c.deleteButtons) != len(c.monthView.Expenses) {
+		delButtons := []material.ButtonStyle{}
+		for _ = range c.monthView.Expenses {
+			delButton := material.Button(c.theme, &widget.Clickable{}, "x")
+			delButton.Background = color.NRGBA{113, 53, 53, 255}
+			delButtons = append(delButtons, delButton)
+		}
+		c.deleteButtons = delButtons
+		return
+	}
+
+	// Don't try to range through buttons if there is none.
+	if len(c.deleteButtons) < 1 {
+		return
+	}
+
+	for i := range c.deleteButtons {
+		if c.deleteButtons[i].Button.Clicked() {
+			c.controller.RemoveExpense((c.monthView.Expenses)[i].Id)
+
+			*c.monthView = c.controller.CreateMonthData(c.monthView.Year, c.monthView.Month)
+			delButtons := []material.ButtonStyle{}
+			for _ = range c.monthView.Expenses {
+				delButton := material.Button(c.theme, &widget.Clickable{}, "x")
+				delButton.Background = color.NRGBA{113, 53, 53, 255}
+				delButtons = append(delButtons, delButton)
+			}
+			c.deleteButtons = delButtons
+			break
+		}
+	}
 }
 
 // Layout returns its layout.
@@ -50,7 +89,7 @@ func (c *ListContainer) Layout(gtx layout.Context) layout.Dimensions {
 	}
 
 	bottomMargin := layout.Inset{Bottom: unit.Dp(10)}
-	topBottomMargins := layout.Inset{Bottom: unit.Dp(6), Top: unit.Dp(6)}
+	topBottomMargins := layout.Inset{Bottom: unit.Dp(6), Top: unit.Dp(12)}
 
 	r := clip.Rect{
 		Min: image.Pt(int(margins.Left)+int(borders.Width), int(margins.Top)+int(borders.Width)),
@@ -63,15 +102,15 @@ func (c *ListContainer) Layout(gtx layout.Context) layout.Dimensions {
 		func(gtx layout.Context) layout.Dimensions {
 			return borders.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 				return insideBorderMargins.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					return c.list.Layout(gtx, len(*c.expenses), func(gtx layout.Context, i int) layout.Dimensions {
-						c.nameLabel.Text = (*c.expenses)[i].Name
-						c.dateLabel.Text = (*c.expenses)[i].Date
-						c.categoryLabel.Text = (*c.expenses)[i].Category
-						c.amountLabel.Text = fmt.Sprintf("%.2f", (*c.expenses)[i].Amount)
+					return c.list.Layout(gtx, len(c.monthView.Expenses), func(gtx layout.Context, i int) layout.Dimensions {
+						c.nameLabel.Text = (c.monthView.Expenses)[i].Name
+						c.dateLabel.Text = (c.monthView.Expenses)[i].Date
+						c.categoryLabel.Text = (c.monthView.Expenses)[i].Category
+						c.amountLabel.Text = fmt.Sprintf("%.2f", (c.monthView.Expenses)[i].Amount)
 						return bottomMargin.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 							r2 := clip.Rect{
 								Min: image.Pt(0, 0),
-								Max: image.Pt(gtx.Constraints.Max.X, int(gtx.Dp(16)+gtx.Sp(16))),
+								Max: image.Pt(gtx.Constraints.Max.X, int(gtx.Dp(24)+gtx.Sp(24))),
 							}
 							palerBlueColor := color.NRGBA{73, 73, 83, 255}
 							paint.FillShape(gtx.Ops, palerBlueColor, r2.Op())
@@ -91,6 +130,14 @@ func (c *ListContainer) Layout(gtx layout.Context) layout.Dimensions {
 								layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
 									return topBottomMargins.Layout(gtx, c.amountLabel.Layout)
 								}),
+								layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+									// Don't show buttons if there is a difference between
+									// length of expenses vs length of buttons
+									if len(c.monthView.Expenses) != len(c.deleteButtons) {
+										return layout.Dimensions{}
+									}
+									return topBottomMargins.Layout(gtx, c.deleteButtons[i].Layout)
+								}),
 								layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 							)
 						},
@@ -102,7 +149,7 @@ func (c *ListContainer) Layout(gtx layout.Context) layout.Dimensions {
 }
 
 // createListContainer returns ListContainer struct.
-func createListContainer(th *material.Theme, expenses *[]domain.Expense) ListContainer {
+func createListContainer(th *material.Theme, monthData *domain.MonthData, controller domain.API) ListContainer {
 	var list widget.List
 	list.Axis = layout.Vertical
 	listWithStyle := material.List(th, &list)
@@ -124,6 +171,14 @@ func createListContainer(th *material.Theme, expenses *[]domain.Expense) ListCon
 		labels[i].MaxLines = 1
 	}
 
+	delButtons := []material.ButtonStyle{}
+
+	for _ = range monthData.Expenses {
+		delButton := material.Button(th, &widget.Clickable{}, "x")
+		delButton.Background = color.NRGBA{113, 53, 53, 255}
+		delButtons = append(delButtons, delButton)
+	}
+
 	return ListContainer{
 		list:          listWithStyle,
 		theme:         th,
@@ -131,6 +186,8 @@ func createListContainer(th *material.Theme, expenses *[]domain.Expense) ListCon
 		dateLabel:     dateLabel,
 		categoryLabel: categoryLabel,
 		amountLabel:   amountLabel,
-		expenses:      expenses,
+		monthView:     monthData,
+		deleteButtons: delButtons,
+		controller:    controller,
 	}
 }
